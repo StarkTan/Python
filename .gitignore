@@ -1,5 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea
 *.iml
-venv2
-venv3
+venv
