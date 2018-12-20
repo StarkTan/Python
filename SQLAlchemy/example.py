@@ -20,10 +20,13 @@ class User(Base):
         return '%s(%r)' % (self.__class__.__name__, self.name)
 
 
+# 初始化环境
 Base.metadata.drop_all(engine)
 Base.metadata.create_all(engine)
+# 创建Sesion
 Session = sessionmaker(bind=engine)
 session = Session()
+# 增删改查操作
 user = User('stark')
 session.add(user)
 session.commit()
