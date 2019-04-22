@@ -10,6 +10,10 @@ import threading
 def aps_test(x):
     print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), x)
 
+def aps_test(x):
+    print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), x)
+def aps_test(x):
+    print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), x)
 
 class Starter(threading.Thread):
     def __init__(self, scheduler):
