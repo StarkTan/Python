@@ -16,6 +16,7 @@ class User(object):
 
 # 实例化
 user = eval('User()')
+print(type(user))
 # 正常使用
 print(user.name)
 user.method()

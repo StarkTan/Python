@@ -2,3 +2,6 @@
 .idea
 *.iml
 venv
+*/cache
+*/private_file
+*/compile
