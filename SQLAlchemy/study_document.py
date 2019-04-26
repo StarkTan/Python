@@ -84,6 +84,7 @@ def merge(user):
                 if attr == 'id':
                     continue
                 if hasattr(user, attr) and getattr(user, attr):
+
                     setattr(our_user, attr, getattr(user, attr))
     method_session.commit()
     method_session.close()
