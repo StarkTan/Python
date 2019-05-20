@@ -30,15 +30,15 @@ if __name__ == "__main__":
         # var.set_value(3.9) # set node value using implicit data type
         print(root.get_children()[0].get_children()[2].get_variables()[1].get_value())
     # Now getting a variable node using its browse path
-    #    while(1):
-    #        myvar = root.get_child(["0:Objects", "2:MyObject", "2:MyVariable"])
-    #        obj = root.get_child(["0:Objects", "2:MyObject"])
-    #        print("myvar is: ", myvar)
-    #        print("myobj is: ", obj)
-    #
-    #    # Stacked myvar access
-    #        print("myvar is: ", root.get_children()[0].get_children()[1].get_variables()[0].get_value())
-    #        time.sleep(2)
+        while (1):
+            myvar = root.get_child(["0:Objects", "2:MyObject", "2:MyVariable"])
+            obj = root.get_child(["0:Objects", "2:MyObject"])
+            print("myvar is: ", myvar)
+            print("myobj is: ", obj)
+
+            # Stacked myvar access
+            print("myvar is: ", root.get_children()[0].get_children()[1].get_variables()[0].get_value())
+            time.sleep(2)
 
     finally:
         client.disconnect()
