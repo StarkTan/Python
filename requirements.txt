@@ -6,3 +6,4 @@ wave == 0.0.2
 pygame==1.9.4
 AWSIoTPythonSDK==1.4.0
 opcua==0.98.7
+pyserial==3.4
