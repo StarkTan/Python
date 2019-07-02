@@ -8,3 +8,5 @@ AWSIoTPythonSDK==1.4.0
 opcua==0.98.7
 pyserial==3.4
 pymodbus==2.2.0
+numpy==1.16.4
+tushare==1.2.37
