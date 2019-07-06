@@ -80,6 +80,17 @@ def slice_data():
     print(df2[df2['E'].isin(['two', 'four'])])
 
 
+def write_read_file():
+    dates = pd.date_range('20170101', periods=6)
+    df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list('ABCD'))
+    file_name = 'cache.json'
+    df.to_json(file_name)
+
+    df = pd.read_json(file_name)
+    print(df)
+
+
 # create_data()
 # view_data()
-slice_data()
+# slice_data()
+write_read_file()
