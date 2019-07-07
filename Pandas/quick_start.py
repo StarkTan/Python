@@ -90,7 +90,27 @@ def write_read_file():
     print(df)
 
 
+def iterate_function():
+    dates = pd.date_range('20170101', periods=6)
+    df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list('ABCD'))
+    print(df)
+    # 行遍历，每一行为DataFrame
+    for index, row in df.iterrows():
+        print(index)  # 输出每行的索引值
+        print(row)  # 输出索引对应的Series
+        print(row['A'])  # 使用row[name] 访问Series中指定的值
+    # 行遍历，将每一行变为元祖，效率快
+    for row in df.itertuples():
+        # getattr(row, 'name') 获取行中指定值
+        print(getattr(row, 'A'), getattr(row, 'B'))
+    # 列遍历 将列转化成 Series
+    for index, row in df.iteritems():
+        print(index)  # 输出列名
+        print(row[1], row[1], row[2], row[3])
+
+
 # create_data()
 # view_data()
 # slice_data()
-write_read_file()
+# write_read_file()
+iterate_function()
