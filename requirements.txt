@@ -11,3 +11,5 @@ pymodbus==2.2.0
 numpy==1.16.4
 tushare==1.2.37
 pandas ==0.24.2
+matplotlib == 3.1.1
+mpl_finance
