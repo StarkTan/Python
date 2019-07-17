@@ -12,4 +12,5 @@ numpy==1.16.4
 tushare==1.2.37
 pandas ==0.24.2
 matplotlib == 3.1.1
-mpl_finance
+mpl_finance==0.10.0
+baostock==0.8.8
