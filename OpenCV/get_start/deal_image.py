@@ -6,7 +6,7 @@ import cv2 as cv
 import os
 from matplotlib import pyplot as plt
 
-img = cv.imread(r'blurred.png', flags=cv.IMREAD_UNCHANGED)  # 加载图片，加载失败返回空矩阵，flags 表示图片数据的处理方式
+img = cv.imread(r'../resources/blurred.png', flags=cv.IMREAD_UNCHANGED)  # 加载图片，加载失败返回空矩阵，flags 表示图片数据的处理方式
 if img is None:
     print('Image load failed！')
     exit(1)

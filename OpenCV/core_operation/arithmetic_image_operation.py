@@ -22,8 +22,8 @@ def image_blend():
     展示  cv.addWeighted() 将两张图片进行重叠
     :return:
     """
-    img1 = cv.imread('ml.png')
-    img2 = cv.imread('opencv-logo.png')
+    img1 = cv.imread(r'../resources/ml.png')
+    img2 = cv.imread(r'../resources/opencv-logo.png')
     # 修改图片二的大小和图片一相同
     img2 = cv.resize(img2, (img1.shape[1],img1.shape[0]), interpolation=cv.INTER_CUBIC)
     print(img1.shape)

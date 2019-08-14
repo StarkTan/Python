@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 
 def pixel_values():
     print('=' * 20)
-    img = cv.imread('messi5.jpg')
+    img = cv.imread(r'../resources/messi5.jpg')
     px = img[100, 100]  # 获取某个点的像素颜色值
     print(px)
     blue = img[100, 100, 0]  # 获取每个像素点的蓝色数值
@@ -28,7 +28,7 @@ def pixel_values():
 
 def image_properties():
     print('=' * 20)
-    img = cv.imread('messi5.jpg')
+    img = cv.imread(r'../resources/messi5.jpg')
     # 获取图片的属性
     print(img.shape)  # 图片数据的shape
     print(img.size)  # 图片像素的个数
@@ -36,7 +36,7 @@ def image_properties():
 
 
 def image_roi():
-    img = cv.imread('messi5.jpg')
+    img = cv.imread(r'../resources/messi5.jpg')
     ball = img[280:340, 330:390]  # 截取感兴趣的部分
     img[273:333, 100:160] = ball
     plt.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))  # 解决颜色失真 opencv 彩色保存为BGR matplotlib 彩色识别 RGB
@@ -45,7 +45,7 @@ def image_roi():
 
 
 def color_channel():
-    img = cv.imread('messi5.jpg')
+    img = cv.imread(r'../resources/messi5.jpg')
     b, g, r = cv.split(img)  # 获取三个颜色的 b = img[:, :, 0] ，img[:, :, 2] = 0
 
     img_new = np.zeros((342, 548, 3), np.uint8)
@@ -71,7 +71,7 @@ def image_border():
     为图片添加 padding
     """
     BLUE = [255, 0, 0]
-    img = cv.imread('opencv-logo.png')
+    img = cv.imread(r'../resources/opencv-logo.png')
 
     # 参数： 图片数据，top, bottom, left, right， borderType，value
     replicate = cv.copyMakeBorder(img, 20, 20, 20, 20, cv.BORDER_REPLICATE)

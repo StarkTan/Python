@@ -1,6 +1,7 @@
 import cv2 as cv
 import os
 
+
 # TODO 未测试
 def read_display():
     cap = cv.VideoCapture(0)  # 调用摄像头
@@ -24,7 +25,7 @@ def play():
     """
     从视频文件播放，和从摄像头获取数据一样
     """
-    cap = cv.VideoCapture('test.mp4')
+    cap = cv.VideoCapture(r'../resources/test.mp4')
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
