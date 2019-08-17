@@ -13,10 +13,9 @@ def list_method():
     print(flags)
 
 
-# TODO 未使用摄像头测试
 def object_tracking():
-    cap = cv.VideoCapture(r'../resources/test2.mp4')
-
+    # cap = cv.VideoCapture(r'../resources/test2.mp4')
+    cap = cv.VideoCapture(0)
     if not cap.isOpened():
         print("Cannot open camera")
         exit()

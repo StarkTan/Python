@@ -2,7 +2,6 @@ import cv2 as cv
 import os
 
 
-# TODO 未测试
 def read_display():
     cap = cv.VideoCapture(0)  # 调用摄像头
     if not cap.isOpened():
@@ -39,8 +38,6 @@ def play():
     cv.destroyAllWindows()
 
 
-#  TODO 未使用摄像头测试
-#  TODO mp4 转 avi 无法正常播放 遇到困难
 def save():
     """
     保存摄像头数据
