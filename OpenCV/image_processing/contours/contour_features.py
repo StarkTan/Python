@@ -115,4 +115,49 @@ def feature_1():
     cv.destroyWindow(winname='line')
 
 
-feature_1()
+def feature_2():
+    """
+    计算轮廓缺陷
+    计算特定点到轮廓的距离
+    """
+    img = cv.imread('../../resources/start_light.png')
+    imgray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    ret, thresh = cv.threshold(imgray, 127, 255, 0)
+    contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    cnt = contours[1]
+    hull = cv.convexHull(cnt, returnPoints=False)  # 获取凸包
+    # 根据图形和凸包判断轮廓缺陷
+    # [ start point(曲线起点), end point（曲线终点）, farthest point（曲线距离图形最远点）,
+    # approximate distance to farthest point]
+    defects = cv.convexityDefects(cnt, hull)
+
+    for i in range(defects.shape[0]):
+        s, e, f, d = defects[i, 0]
+        start = tuple(cnt[s][0])
+        end = tuple(cnt[e][0])
+        far = tuple(cnt[f][0])
+        cv.line(img, start, end, [0, 255, 0], 2)
+        cv.circle(img, far, 5, [0, 0, 255], -1)
+    cv.imshow('img', img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    # 判断某个点是否在图形中
+    point = (100, 100)
+    # 参数 图形点集，检查的点，True，表示具体距离，Flase 返回 -1,0,1 表示是否在图形内
+    dist = cv.pointPolygonTest(cnt, point, True)
+    print(dist)
+
+    # 判断图形的相似性
+    img2 = cv.imread('../../resources/stars.png', 0)
+    ret, thresh2 = cv.threshold(img2, 127, 255, 0)
+    contours, hierarchy = cv.findContours(thresh2, 2, 1)
+    ret = cv.matchShapes(cnt, cnt, 1, 0.0)
+    print(ret)
+    for i in range(5, 0, -1):
+        cnt1 = contours[i]
+        ret = cv.matchShapes(cnt, cnt1, 1, 0.0)
+        print(ret)
+
+# feature_1()
+feature_2()
