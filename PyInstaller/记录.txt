@@ -1,0 +1,12 @@
+记录Python打包exe文件的过程
+1.安装 pyinstaller
+    pip install Pyinstaller
+2.在项目目录下执行命令行
+    pyinstaller -F -w *.py
+    -F 表示生成单个可执行文件
+    -w 表示去掉控制台窗口，这在GUI界面时非常有用。不过如果是命令行程序的话那就把这个选项删除吧！
+    -p 表示你自己自定义需要加载的类路径，一般情况下用不到
+    -i 表示可执行文件的图标
+    –version-file file_version_info.txt ：表示将标准版本信息文件的内容赋给exe文件的属性
+
+3.打包的exe在新增的dist文件夹下面
