@@ -1,6 +1,7 @@
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDesktopWidget
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 
 
 class Demo(QMainWindow):
@@ -9,12 +10,18 @@ class Demo(QMainWindow):
     """
     def __init__(self):
         super().__init__()
+        # 创建自定义事件通知器
+        self.custom_single = CustomSingle()
+        self.custom_single.serial_config[tuple].connect(self.serial_conn)
+        # 开启状态条
+        self.status_bar = self.statusBar()
+        self.serial_conn = None
+
         self.initUI()
 
     def initUI(self):
-        # 开启状态条
-        self.statusbar = self.statusBar()
-        self.statusbar.showMessage('Ready')
+        # 初始化状态条展示
+        self.status_bar.showMessage('Ready')
 
         # 设置窗口外形
         self.resize(800, 500)
@@ -22,12 +29,11 @@ class Demo(QMainWindow):
         self.setMinimumSize(800, 500)  # 设置窗口最小限制
         self.setMaximumSize(800, 500)  # 设置窗口最大限制
         self.setFixedSize(800, 500)  # 配置窗口的无法最大化
-
+        # 设置窗口展示
         self.setWindowIcon(QIcon('resources/pyqt.jpg'))  # 设置串口图标
-
         self.center()  # 配置窗口桌面居中
         self.setWindowTitle('Demo')  # 设置窗口名
-        self.show()
+        self.init_menu()
 
     def center(self):
         """窗口居中"""
@@ -36,7 +42,133 @@ class Demo(QMainWindow):
         self.move((screen.width() - size.width()) / 2,
                   (screen.height() - size.height()) / 2)
 
+    def init_menu(self):
+        """创建菜单栏"""
+
+
+        choice_project = QAction(QIcon(''), '&配置项目', self)
+        choice_project.setShortcut('Ctrl+O')
+        choice_project.setStatusTip('选择测试项目')
+        choice_project.triggered.connect(self.load_project)
+
+        conn_act = QAction(QIcon(''), '&连接串口', self)
+        conn_act.setShortcut('Ctrl+N')
+        conn_act.setStatusTip('创建串口连接')
+        conn_act.triggered.connect(self.serial_conn_window)
+
+        disconn_act = QAction(QIcon(''), '&断开连接', self)
+        disconn_act.setShortcut('Ctrl+I')
+        disconn_act.setStatusTip('断开串口连接')
+        disconn_act.triggered.connect(self.serial_disconn)
+        disconn_act.setDisabled(True)
+
+        self.conn_act = conn_act
+        self.disconn_act = disconn_act
+        # 创建菜单栏和菜单，添加选项
+        menubar = self.menuBar()
+        config_menu = menubar.addMenu('&配置')
+        config_menu.addAction(choice_project)
+        config_menu.addAction(conn_act)
+        config_menu.addAction(disconn_act)
+
+    def load_project(self):
+        # 打开文件选择框
+        fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        print(fname)
+
+    def serial_conn_window(self):
+        serial_config = SerialConfigWindow(self.custom_single)
+        serial_config.exec_()
+
+    def serial_conn(self, data):
+        print(data)
+        self.serial_conn = ''
+        self.disconn_act.setDisabled(False)
+        self.conn_act.setDisabled(True)
+
+    def serial_disconn(self):
+        self.serial_conn = None
+        self.disconn_act.setDisabled(True)
+        self.conn_act.setDisabled(False)
+
+
+class CustomSingle(QObject):
+    serial_config = pyqtSignal(tuple)
+
+
+class SerialConfigWindow(QDialog):
+    """
+    QMainWindow 类提供了一个主应用程序窗口
+    """
+    def __init__(self, custom_single):
+        super().__init__()
+        self.custom_single = custom_single
+        self.init_ui()
+
+    def init_ui(self):
+        self.resize(250, 100)
+        self.setWindowTitle('串口连接')
+        self.setWindowModality(Qt.ApplicationModal)
+
+        port_combo = QComboBox(self)
+        port_combo.resize(20, 10)
+        port_combo.addItem("COM1")
+        port_combo.addItem("COM2")
+        port_combo.addItem("COM3")
+        port_combo.addItem("COM4")
+        port_combo.addItem("COM5")
+
+        baudrate_combo = QComboBox(self)
+        baudrate_combo.addItem("9600")
+        baudrate_combo.addItem("115200")
+        baudrate_combo.addItem("460800")
+        baudrate_combo.addItem("1000000")
+
+        ok_btn = QPushButton('确定', self)
+        ok_btn.clicked.connect(self.serial_conn)
+
+        cancel_btn = QPushButton('取消', self)
+        cancel_btn.clicked.connect(self.close)
+
+        port_lbl = QLabel("串口：", self)
+        baudrate_lbl = QLabel("波特率：", self)
+
+
+        self.port_combo = port_combo
+        self.baudrate_combo = baudrate_combo
+
+        hbox1 = QHBoxLayout()
+        hbox1.addStretch(1)
+        hbox1.addWidget(port_lbl)
+        hbox1.addWidget(port_combo)
+        hbox1.addStretch(1)
+        hbox1.addWidget(baudrate_lbl)
+        hbox1.addWidget(baudrate_combo)
+        hbox1.addStretch(1)
+
+        hbox2 = QHBoxLayout()
+        hbox2.addStretch(1)
+        hbox2.addWidget(ok_btn)
+        hbox2.addStretch(1)
+        hbox2.addWidget(cancel_btn)
+        hbox2.addStretch(1)
+
+        vbox = QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addLayout(hbox1)
+        vbox.addStretch(1)
+        vbox.addLayout(hbox2)
+        self.setLayout(vbox)
+
+    def serial_conn(self):
+        port = str(self.port_combo.currentText())
+        baudrate = int(self.baudrate_combo.currentText())
+
+        self.custom_single.serial_config.emit((port, baudrate))
+        self.close()
+
 
 app = QApplication([])
-tetris = Demo()
+demo = Demo()
+demo.show()
 sys.exit(app.exec_())
