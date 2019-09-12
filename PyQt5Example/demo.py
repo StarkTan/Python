@@ -22,13 +22,14 @@ class Demo(QMainWindow):
     def initUI(self):
         # 初始化状态条展示
         self.status_bar.showMessage('Ready')
-
+        self.tboard = Board(self)
+        self.setCentralWidget(self.tboard)  # 中心窗口
         # 设置窗口外形
-        self.resize(800, 500)
+        self.resize(1000, 500)
         # 配置窗口大小固定不变
-        self.setMinimumSize(800, 500)  # 设置窗口最小限制
-        self.setMaximumSize(800, 500)  # 设置窗口最大限制
-        self.setFixedSize(800, 500)  # 配置窗口的无法最大化
+        self.setMinimumSize(1000, 500)  # 设置窗口最小限制
+        self.setMaximumSize(1000, 500)  # 设置窗口最大限制
+        self.setFixedSize(1000, 500)  # 配置窗口的无法最大化
         # 设置窗口展示
         self.setWindowIcon(QIcon('resources/pyqt.jpg'))  # 设置串口图标
         self.center()  # 配置窗口桌面居中
@@ -166,6 +167,125 @@ class SerialConfigWindow(QDialog):
 
         self.custom_single.serial_config.emit((port, baudrate))
         self.close()
+
+
+class Board(QFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.init_board()
+
+    def init_board(self):
+        # 创建 QListWidget
+        self.resize(1000, 500)
+
+        left_widget = QListWidget()
+        for name in ['测试用例', '测试报告',"测试日志"]:
+            item = QListWidgetItem(name, left_widget)
+            item.setSizeHint(QSize(60, 80))
+            item.setTextAlignment(Qt.AlignCenter)
+
+        # 设置样式
+        list_style = """QListWidget, QListView, QTreeWidget, QTreeView {
+                                outline: 0px;
+                                }
+
+                                QListWidget {
+                                min-width: 200px;
+                                max-width: 200px;
+                                color: Black;
+                                background: #F5F5F5;
+                                }
+
+                                QListWidget::Item:selected {
+                                background: lightGray;
+                                border-left: 5px solid red;
+                                }
+
+                                HistoryPanel:hover {
+                                background: rgb(52, 52, 52);
+                                }"""
+        left_widget.setStyleSheet(list_style)
+        left_widget.setFrameShape(QListWidget.NoFrame)  # 去掉边框
+        left_widget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # 隐藏滚动条
+        left_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        right_widget = QStackedWidget()
+        self.tab1 = QWidget()
+        self.tab2 = QWidget()
+        self.tab3 = QWidget()
+        self.tab1UI()
+        self.tab2UI()
+        self.tab3UI()
+        right_widget.addWidget(self.tab1)
+        right_widget.addWidget(self.tab2)
+        right_widget.addWidget(self.tab3)
+        left_widget.currentRowChanged.connect(right_widget.setCurrentIndex)
+
+        project_logo = QLabel(self)
+        project_logo.setPixmap(QPixmap("resources/项目.PNG"))
+
+        company_logo = QLabel(self)
+        company_logo.setPixmap(QPixmap("resources/公司.PNG"))
+
+        hbox_logo = QHBoxLayout()
+        hbox_logo.addWidget(project_logo)
+        hbox_logo.addStretch(1)
+        hbox_logo.addWidget(company_logo)
+
+        hbox_main = QHBoxLayout()
+        hbox_main.addWidget(left_widget)
+        hbox_main.addWidget(right_widget)
+        hbox_main.addStretch(1)  # 添加一个伸缩量，可以看做左边填满
+
+
+        vbox = QVBoxLayout(self)
+        vbox.addLayout(hbox_logo)
+        vbox.addLayout(hbox_main)
+        self.setLayout(vbox)
+
+    def tab1UI(self):
+        # 表单布局
+        layout = QFormLayout()
+        # 添加姓名，地址的单行文本输入框
+        layout.addRow('姓名', QLineEdit())
+        layout.addRow('地址', QLineEdit())
+        # 设置选项卡的小标题与布局方式
+        self.tab1.setLayout(layout)
+
+    def tab2UI(self):
+        # zhu表单布局，次水平布局
+        layout = QFormLayout()
+        sex = QHBoxLayout()
+
+        # 水平布局添加单选按钮
+        sex.addWidget(QRadioButton('男'))
+        sex.addWidget(QRadioButton('女'))
+
+        # 表单布局添加控件
+        layout.addRow(QLabel('性别'), sex)
+        layout.addRow('生日', QLineEdit())
+
+        self.tab2.setLayout(layout)
+
+    def tab3UI(self):
+        # 水平布局
+        layout = QHBoxLayout()
+
+        # 添加控件到布局中
+        layout.addWidget(QLabel('科目'))
+        layout.addWidget(QCheckBox('物理'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+        layout.addWidget(QCheckBox('高数'))
+
+        # 设置小标题与布局方式
+        self.tab3.setLayout(layout)
 
 
 app = QApplication([])
