@@ -195,7 +195,7 @@ def table_view():
             self.setWindowTitle('QTableView表格视图的例子')
             self.resize(500, 300)
             # 设置数据层次结构，4行4列,貌似没有影响
-            self.model = QStandardItemModel(4, 4)
+            self.model = QStandardItemModel()
             # 设置水平方向四个头标签文本内容
             self.model.setHorizontalHeaderLabels(['标题1', '标题2', '标题3', '标题4', '标题5'])
 
