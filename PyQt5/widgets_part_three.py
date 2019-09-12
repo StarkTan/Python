@@ -179,6 +179,73 @@ def left_tab_widget():
     sys.exit(app.exec_())
 
 
+def table_view():
+    """
+    表盒展示
+    https://blog.csdn.net/jia666666/article/details/81624259
+    """
+    from PyQt5.QtWidgets import (QWidget, QTableView, QVBoxLayout, QApplication,
+                                 QHeaderView,QAbstractItemView)
+    from PyQt5.QtGui import QStandardItemModel, QStandardItem,QBrush,QColor,QFont
+
+    class Table(QWidget):
+        def __init__(self, parent=None):
+            super(Table, self).__init__(parent)
+            # 设置标题与初始大小
+            self.setWindowTitle('QTableView表格视图的例子')
+            self.resize(500, 300)
+            # 设置数据层次结构，4行4列,貌似没有影响
+            self.model = QStandardItemModel(4, 4)
+            # 设置水平方向四个头标签文本内容
+            self.model.setHorizontalHeaderLabels(['标题1', '标题2', '标题3', '标题4', '标题5'])
+
+            for row in range(20):
+                for column in range(4):
+                    item = QStandardItem('row %s,column %s' % (row, column))
+                    # 设置每个位置的文本值
+                    self.model.setItem(row, column, item)
+            # 添加单行数据
+            self.model.appendRow([
+                QStandardItem('row %s,column %s' % (11, 11)),
+                QStandardItem('row %s,column %s' % (11, 11)),
+                QStandardItem('row %s,column %s' % (11, 11)),
+                QStandardItem('row %s,column %s' % (11, 11)),
+            ])
+
+            # 实例化表格视图，设置模型为自定义的模型
+            self.tableView = QTableView()
+            self.tableView.setModel(self.model)
+            # 水平方向标签拓展剩下的窗口部分，填满表格
+            self.tableView.horizontalHeader().setStretchLastSection(True)
+            # 水平方向，配置列的宽度修改方式
+            self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+            # 设置不可编辑
+            self.tableView.setEditTriggers(QTableView.NoEditTriggers)
+            # 设置行选中
+            self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+            # 设置只能选中一行
+            self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)
+            # 设置字体颜色
+            self.model.item(1, 1).setForeground(QBrush(QColor(255, 0, 0)))
+            # 设置单元格字体
+            self.model.item(1, 1).setFont(QFont('Times', 10, QFont.Black))
+            # 设置列隐藏
+            self.tableView.setColumnHidden(4, True)
+            # 设置列宽
+            self.tableView.setColumnWidth(0,20)
+
+            # 设置布局
+            layout = QVBoxLayout()
+            layout.addWidget(self.tableView)
+            self.setLayout(layout)
+
+    app = QApplication(sys.argv)
+    table = Table()
+    table.show()
+    sys.exit(app.exec_())
+
+
 # tab_widget()
-left_tab_widget()
+# left_tab_widget()
+table_view()
 
