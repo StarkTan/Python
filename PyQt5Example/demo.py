@@ -1,4 +1,5 @@
 import sys
+import random
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -183,6 +184,8 @@ class Board(QFrame):
             item = QListWidgetItem(name, left_widget)
             item.setSizeHint(QSize(60, 80))
             item.setTextAlignment(Qt.AlignCenter)
+            if name == '测试用例':
+                item.setSelected(True)
 
         # 设置样式
         list_style = """QListWidget, QListView, QTreeWidget, QTreeView {
@@ -210,10 +213,9 @@ class Board(QFrame):
         left_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         right_widget = QStackedWidget()
-        self.tab1 = QWidget()
+        self.tab1 = TestCase()
         self.tab2 = QWidget()
         self.tab3 = QWidget()
-        self.tab1UI()
         self.tab2UI()
         self.tab3UI()
         right_widget.addWidget(self.tab1)
@@ -286,6 +288,102 @@ class Board(QFrame):
 
         # 设置小标题与布局方式
         self.tab3.setLayout(layout)
+
+
+class TestCase(QWidget):
+    """
+    测试用例页面
+    """
+    def __init__(self, parent=None):
+        super(TestCase, self).__init__(parent)
+        layout = QVBoxLayout()
+
+        self.table = TestCaseTable()
+        layout.addWidget(self.table)
+        self.setLayout(layout)
+
+
+class TestCaseTable(QWidget):
+    """
+    测试用例界面上部列表
+    """
+    def __init__(self, parent=None):
+        super(TestCaseTable, self).__init__(parent)
+
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(["用例名称", '状态', '日志',' '])
+
+        for row in range(20):
+            name_item = QStandardItem('测试用例 %d' % row)
+            self.model.setItem(row, 0, name_item)
+            status = random.randint(1, 4)
+            if status == 1:
+                status_item = QStandardItem('Waiting')
+                self.model.setItem(row, 1, status_item)
+            elif status == 2:
+                status_item = QStandardItem('Testing')
+                self.model.setItem(row, 1, status_item)
+            elif status == 3:
+                status_item = QStandardItem('Passed')
+                self.model.setItem(row, 1, status_item)
+            else:
+                status_item = QStandardItem('Failed')
+                self.model.setItem(row, 1, status_item)
+            # self.model.setItem(row, 2,  CheckLogButton(self.model))
+
+        self.tableView = QTableView()
+        self.tableView.setModel(self.model)
+        self.tableView.setItemDelegateForColumn(2, CheckLogButton(self))
+
+        # 水平方向标签拓展剩下的窗口部分，填满表格
+        self.tableView.horizontalHeader().setStretchLastSection(True)
+        # 水平方向，配置列的宽度修改方式
+        self.tableView.horizontalHeader().setSectionResizeMode(0)
+        # 设置不可编辑
+        self.tableView.setEditTriggers(QTableView.NoEditTriggers)
+        # 设置行选中
+        self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # 设置只能选中一行
+        self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tableView.setColumnWidth(0, 300)
+        self.tableView.setColumnWidth(2, 40)
+        layout = QVBoxLayout()
+        layout.addWidget(self.tableView)
+        self.setLayout(layout)
+
+    def check_log(self):
+        """
+        TODO 弹出当前测试日志的窗口
+        """
+        index = self.tableView.currentIndex()
+        test_case = self.model.item(index.row(), 0).text()
+        print(test_case)
+
+class CheckLogButton(QItemDelegate):
+    def __init__(self, parent=None):
+        super(CheckLogButton, self).__init__(parent)
+
+    def paint(self, painter, option, index):
+        if not self.parent().tableView.indexWidget(index):
+            button = QPushButton(
+                self.tr('查看'),
+                self.parent(),
+                clicked = self.parent().check_log
+            )
+            if index.row() > 0:
+                button.setDisabled(True)
+            self.parent().tableView.setIndexWidget(
+                index,
+                button
+            )
+
+class TestCaseConfig(QWidget):
+    """
+    测试用例界面下方输入框
+    """
+    def __init__(self, parent=None):
+        super(TestCaseConfig, self).__init__(parent)
+
 
 
 app = QApplication([])
