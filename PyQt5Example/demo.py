@@ -299,7 +299,9 @@ class TestCase(QWidget):
         layout = QVBoxLayout()
 
         self.table = TestCaseTable()
+        self.config = TestCaseConfig()
         layout.addWidget(self.table)
+        layout.addWidget(self.config)
         self.setLayout(layout)
 
 
@@ -377,13 +379,75 @@ class CheckLogButton(QItemDelegate):
                 button
             )
 
+
 class TestCaseConfig(QWidget):
     """
     测试用例界面下方输入框
     """
     def __init__(self, parent=None):
         super(TestCaseConfig, self).__init__(parent)
+        label1 = QLabel('工号')
+        label2 = QLabel('序列号')
+        label3 = QLabel('MaC地址1')
+        label4 = QLabel('Mac地址2')
+        label5 = QLabel('Input5')
+        label6 = QLabel('Input6')
 
+        self.edit1 = QLineEdit()
+        self.edit2 = QLineEdit()
+        self.edit3 = QLineEdit()
+        self.edit4 = QLineEdit()
+        self.edit5 = QLineEdit()
+        self.edit6 = QLineEdit()
+
+        grid = QGridLayout()
+
+        grid.addWidget(label1, 1, 0)
+        grid.addWidget(self.edit1, 1, 1)
+        grid.addWidget(label2, 1,2)
+        grid.addWidget(self.edit2, 1, 3)
+
+        grid.addWidget(label3, 2, 0)
+        grid.addWidget(self.edit3, 2, 1)
+        grid.addWidget(label4, 2, 2)
+        grid.addWidget(self.edit4, 2, 3)
+        self.edit4.setDisabled(True)
+        self.edit3.textChanged[str].connect(lambda data : self.edit4.setText(data))
+
+        grid.addWidget(label5, 3, 0)
+        grid.addWidget(self.edit5, 3, 1)
+        grid.addWidget(label6, 3, 2)
+        grid.addWidget(self.edit6, 3, 3)
+        self.edit5.setDisabled(True)
+        self.edit6.setDisabled(True)
+
+
+        self.begin_btn = QPushButton('开始')
+        self.begin_btn.setMinimumSize(80, 60)
+        self.begin_btn.setMaximumSize(80, 60)
+        self.begin_btn.clicked.connect(self.begin_test)
+
+        vbox = QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addWidget(self.begin_btn)
+        vbox.addStretch(1)
+
+        hbox = QHBoxLayout()
+        hbox.addLayout(grid)
+        hbox.addLayout(vbox)
+
+        self.setLayout(hbox)
+
+
+    def begin_test(self):
+        data1 = self.edit1.text()
+        data2 = self.edit2.text()
+        data3 = self.edit3.text()
+        data4 = self.edit4.text()
+        data5 = self.edit5.text()
+        data6 = self.edit6.text()
+
+        print(data1,data2,data3,data4,data5,data6)
 
 
 app = QApplication([])
