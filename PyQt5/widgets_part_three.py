@@ -184,9 +184,10 @@ def table_view():
     表盒展示
     https://blog.csdn.net/jia666666/article/details/81624259
     """
-    from PyQt5.QtWidgets import (QWidget, QTableView, QVBoxLayout, QApplication,
-                                 QHeaderView,QAbstractItemView)
+    from PyQt5.QtWidgets import (QWidget, QTableView, QVBoxLayout, QApplication,QHBoxLayout,
+                                 QHeaderView,QAbstractItemView,QPushButton,QItemDelegate)
     from PyQt5.QtGui import QStandardItemModel, QStandardItem,QBrush,QColor,QFont
+    from PyQt5.QtCore import Qt
 
     class Table(QWidget):
         def __init__(self, parent=None):
@@ -229,15 +230,39 @@ def table_view():
             self.model.item(1, 1).setForeground(QBrush(QColor(255, 0, 0)))
             # 设置单元格字体
             self.model.item(1, 1).setFont(QFont('Times', 10, QFont.Black))
-            # 设置列隐藏
-            self.tableView.setColumnHidden(4, True)
+            # 设置列是否隐藏
+            self.tableView.setColumnHidden(4, False)
             # 设置列宽
-            self.tableView.setColumnWidth(0,20)
+            self.tableView.setColumnWidth(0, 20)
+            self.tableView.setItemDelegateForColumn(4, MyButtonDelegate(self.tableView))
 
             # 设置布局
             layout = QVBoxLayout()
             layout.addWidget(self.tableView)
             self.setLayout(layout)
+
+    class MyButtonDelegate(QItemDelegate):
+        def __init__(self, parent=None):
+            super(MyButtonDelegate, self).__init__(parent)
+
+        def paint(self, painter, option, index):
+            if not self.parent().indexWidget(index):
+                button_read = QPushButton(
+                    self.tr('读'),
+                    self.parent(),
+                    clicked = self.open_window
+                )
+
+                button_read.index = [index.row(), index.column()]
+                self.parent().setIndexWidget(
+                    index,
+                    button_read
+                )
+
+
+        def open_window(self):
+            print('open window')
+
 
     app = QApplication(sys.argv)
     table = Table()
