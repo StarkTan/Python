@@ -1,5 +1,7 @@
 import sys
-import random
+import imp
+import utils
+import os
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -17,7 +19,7 @@ class Demo(QMainWindow):
         # 开启状态条
         self.status_bar = self.statusBar()
         self.serial_conn = None
-
+        self.test_modules = []
         self.initUI()
 
     def initUI(self):
@@ -26,11 +28,11 @@ class Demo(QMainWindow):
         self.tboard = Board(self)
         self.setCentralWidget(self.tboard)  # 中心窗口
         # 设置窗口外形
-        self.resize(1000, 500)
+        self.resize(1200, 600)
         # 配置窗口大小固定不变
-        self.setMinimumSize(1000, 500)  # 设置窗口最小限制
-        self.setMaximumSize(1000, 500)  # 设置窗口最大限制
-        self.setFixedSize(1000, 500)  # 配置窗口的无法最大化
+        self.setMinimumSize(1200, 600)  # 设置窗口最小限制
+        self.setMaximumSize(1200, 600)  # 设置窗口最大限制
+        self.setFixedSize(1200, 600)  # 配置窗口的无法最大化
         # 设置窗口展示
         self.setWindowIcon(QIcon('resources/pyqt.jpg'))  # 设置串口图标
         self.center()  # 配置窗口桌面居中
@@ -75,8 +77,24 @@ class Demo(QMainWindow):
 
     def load_project(self):
         # 打开文件选择框
-        fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')
-        print(fname)
+        fname = QFileDialog.getOpenFileName(self, 'Open file', './')
+        if len(fname[0]) > 0:
+            self.test_modules.clear()
+            res = utils.config_parse(fname[0])
+            self.setWindowTitle(res['project'])
+            # 加载测试的文件
+            folder = os.path.split(fname[0])[0]
+            for testcase in res['files']:
+                file_path = os.path.join(folder, testcase+'.py')
+                if os.path.exists(file_path):
+                    fn_, path, desc = imp.find_module(testcase, [folder])
+                    mod = imp.load_module(testcase, fn_, path, desc)
+                    self.test_modules.append(mod)
+                else:
+                    print('load testcase error')
+            # 展示测试项
+            self.tboard.tab1.table.testcases = res['files']
+            self.tboard.tab1.table.load_data()
 
     def serial_conn_window(self):
         serial_config = SerialConfigWindow(self.custom_single)
@@ -176,11 +194,10 @@ class Board(QFrame):
         self.init_board()
 
     def init_board(self):
-        # 创建 QListWidget
-        self.resize(1000, 500)
+        self.resize(1200, 600)
 
         left_widget = QListWidget()
-        for name in ['测试用例', '测试报告',"测试日志"]:
+        for name in ['测试用例', '测试记录']:
             item = QListWidgetItem(name, left_widget)
             item.setSizeHint(QSize(60, 80))
             item.setTextAlignment(Qt.AlignCenter)
@@ -214,13 +231,9 @@ class Board(QFrame):
 
         right_widget = QStackedWidget()
         self.tab1 = TestCase()
-        self.tab2 = QWidget()
-        self.tab3 = QWidget()
-        self.tab2UI()
-        self.tab3UI()
+        self.tab2 = TestRecordTable()
         right_widget.addWidget(self.tab1)
         right_widget.addWidget(self.tab2)
-        right_widget.addWidget(self.tab3)
         left_widget.currentRowChanged.connect(right_widget.setCurrentIndex)
 
         project_logo = QLabel(self)
@@ -237,57 +250,13 @@ class Board(QFrame):
         hbox_main = QHBoxLayout()
         hbox_main.addWidget(left_widget)
         hbox_main.addWidget(right_widget)
-        hbox_main.addStretch(1)  # 添加一个伸缩量，可以看做左边填满
+        # hbox_main.addStretch(1)  # 添加一个伸缩量，可以看做左边填满
 
 
         vbox = QVBoxLayout(self)
         vbox.addLayout(hbox_logo)
         vbox.addLayout(hbox_main)
         self.setLayout(vbox)
-
-    def tab1UI(self):
-        # 表单布局
-        layout = QFormLayout()
-        # 添加姓名，地址的单行文本输入框
-        layout.addRow('姓名', QLineEdit())
-        layout.addRow('地址', QLineEdit())
-        # 设置选项卡的小标题与布局方式
-        self.tab1.setLayout(layout)
-
-    def tab2UI(self):
-        # zhu表单布局，次水平布局
-        layout = QFormLayout()
-        sex = QHBoxLayout()
-
-        # 水平布局添加单选按钮
-        sex.addWidget(QRadioButton('男'))
-        sex.addWidget(QRadioButton('女'))
-
-        # 表单布局添加控件
-        layout.addRow(QLabel('性别'), sex)
-        layout.addRow('生日', QLineEdit())
-
-        self.tab2.setLayout(layout)
-
-    def tab3UI(self):
-        # 水平布局
-        layout = QHBoxLayout()
-
-        # 添加控件到布局中
-        layout.addWidget(QLabel('科目'))
-        layout.addWidget(QCheckBox('物理'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-        layout.addWidget(QCheckBox('高数'))
-
-        # 设置小标题与布局方式
-        self.tab3.setLayout(layout)
 
 
 class TestCase(QWidget):
@@ -312,26 +281,10 @@ class TestCaseTable(QWidget):
     def __init__(self, parent=None):
         super(TestCaseTable, self).__init__(parent)
 
-        self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["用例名称", '状态', '日志',' '])
+        self.testcases = []
 
-        for row in range(20):
-            name_item = QStandardItem('测试用例 %d' % row)
-            self.model.setItem(row, 0, name_item)
-            status = random.randint(1, 4)
-            if status == 1:
-                status_item = QStandardItem('Waiting')
-                self.model.setItem(row, 1, status_item)
-            elif status == 2:
-                status_item = QStandardItem('Testing')
-                self.model.setItem(row, 1, status_item)
-            elif status == 3:
-                status_item = QStandardItem('Passed')
-                self.model.setItem(row, 1, status_item)
-            else:
-                status_item = QStandardItem('Failed')
-                self.model.setItem(row, 1, status_item)
-            # self.model.setItem(row, 2,  CheckLogButton(self.model))
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(["用例名称", '状态', '日志', '开始时间', '结束时间', ''])
 
         self.tableView = QTableView()
         self.tableView.setModel(self.model)
@@ -353,6 +306,16 @@ class TestCaseTable(QWidget):
         layout.addWidget(self.tableView)
         self.setLayout(layout)
 
+
+    def load_data(self):
+        self.model.removeRows(0, self.model.rowCount())
+        for i in range(len(self.testcases)):
+            testcase = self.testcases[i]
+            item_name = QStandardItem(testcase)
+            self.model.setItem(i, 0, item_name)
+            item_status = QStandardItem('等待测试')
+            self.model.setItem(i, 1, item_status)
+
     def check_log(self):
         """
         TODO 弹出当前测试日志的窗口
@@ -360,6 +323,7 @@ class TestCaseTable(QWidget):
         index = self.tableView.currentIndex()
         test_case = self.model.item(index.row(), 0).text()
         print(test_case)
+
 
 class CheckLogButton(QItemDelegate):
     def __init__(self, parent=None):
@@ -372,8 +336,6 @@ class CheckLogButton(QItemDelegate):
                 self.parent(),
                 clicked = self.parent().check_log
             )
-            if index.row() > 0:
-                button.setDisabled(True)
             self.parent().tableView.setIndexWidget(
                 index,
                 button
@@ -448,6 +410,49 @@ class TestCaseConfig(QWidget):
         data6 = self.edit6.text()
 
         print(data1,data2,data3,data4,data5,data6)
+
+
+class TestRecordTable(QWidget):
+    """
+    测试记录
+    """
+    def __init__(self, parent=None):
+        super(TestRecordTable, self).__init__(parent)
+        self.init_data()
+        self.show_data()
+
+    def init_data(self):
+        self.headers = ['项目名称', '产品序列号', '测试人员', '测试时间', '测试结果', '测试用例1', '测试用例2', '测试用例3', '测试用例4']
+        self.datas = [
+            ['项目一', '000001', '073130', '2019-01-01 14:00:00', 'PASS', 'PASS', "PASS", 'PASS', 'PASS'],
+            ['项目一', '000002', '073130', '2019-01-01 14:05:00', 'FAILED', 'PASS', "PASS", 'PASS', 'FAILED'],
+            ['项目一', '000003', '073130', '2019-01-01 14:10:00', 'FAILED', 'PASS', "PASS", 'FAILED', 'PASS']
+        ]
+
+    def show_data(self):
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(self.headers)
+
+        for row in range(len(self.datas)):
+            data = self.datas[row]
+            for column in range(len(self.headers)):
+                item = QStandardItem(data[column])
+                if data[column] == 'PASS':
+                    item.setForeground(QBrush(QColor(0, 255, 0)))
+                if data[column] == 'FAILED':
+                    item.setForeground(QBrush(QColor(255, 0, 0)))
+                self.model.setItem(row, column, item)
+
+        self.tableView = QTableView()
+        self.tableView.setModel(self.model)
+        self.tableView.horizontalHeader().setStretchLastSection(True)
+        self.tableView.horizontalHeader().setSectionResizeMode(0)
+        self.tableView.setEditTriggers(QTableView.NoEditTriggers)
+        self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)
+        layout = QVBoxLayout()
+        layout.addWidget(self.tableView)
+        self.setLayout(layout)
 
 
 app = QApplication([])
