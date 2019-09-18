@@ -15,12 +15,33 @@ class Demo(QMainWindow):
         super().__init__()
         # 创建自定义事件通知器
         self.custom_single = CustomSingle()
-        self.custom_single.serial_config[tuple].connect(self.serial_conn)
+        self.init_events()
         # 开启状态条
         self.status_bar = self.statusBar()
         self.serial_conn = None
         self.test_modules = []
         self.initUI()
+
+    def init_events(self):
+        self.custom_single.serial_config[tuple].connect(self.serial_conn)
+        self.custom_single.testcase_begin[int].connect(self.testcase_begin)
+        self.custom_single.testcase_end[int].connect(self.testcase_end)
+        self.custom_single.test_end.connect(self.test_end)
+
+    def test_begin(self,config_data):
+        print('开始测试！')
+        print(config_data)
+        workThread = WorkThread(self.custom_single, self.test_modules)
+        workThread.start()
+
+    def testcase_begin(self, data):
+        print('第 %d 个测试用例开始' % data)
+
+    def testcase_end(self, data):
+        print('第 %d 个测试用例结束' % data)
+
+    def test_end(self):
+        print('测试完成！')
 
     def initUI(self):
         # 初始化状态条展示
@@ -77,7 +98,7 @@ class Demo(QMainWindow):
 
     def load_project(self):
         # 打开文件选择框
-        fname = QFileDialog.getOpenFileName(self, 'Open file', './')
+        fname = QFileDialog.getOpenFileName(self, 'Open file', './', 'Binary File(*.xml)')
         if len(fname[0]) > 0:
             self.test_modules.clear()
             res = utils.config_parse(fname[0])
@@ -114,6 +135,9 @@ class Demo(QMainWindow):
 
 class CustomSingle(QObject):
     serial_config = pyqtSignal(tuple)
+    testcase_begin = pyqtSignal(int)
+    testcase_end = pyqtSignal(int)
+    test_end = pyqtSignal()
 
 
 class SerialConfigWindow(QDialog):
@@ -408,8 +432,8 @@ class TestCaseConfig(QWidget):
         data4 = self.edit4.text()
         data5 = self.edit5.text()
         data6 = self.edit6.text()
-
-        print(data1,data2,data3,data4,data5,data6)
+        self.parent().parent().parent()\
+            .parent().test_begin((data1, data2, data3, data4, data5, data6))
 
 
 class TestRecordTable(QWidget):
@@ -454,6 +478,22 @@ class TestRecordTable(QWidget):
         layout.addWidget(self.tableView)
         self.setLayout(layout)
 
+
+class WorkThread(QThread):
+    def __init__(self, custom_single, modules):
+        super(WorkThread, self).__init__()
+        self.custom_single = custom_single
+        self.modules = modules
+
+    def run(self):
+        modules = self.modules
+        for i in range(len(modules)):
+            self.custom_single.testcase_begin.emit(i)
+            module = modules[i]
+            print(module)
+            print(module.test())
+            self.custom_single.testcase_end.emit(i)
+        self.custom_single.test_end.emit()
 
 app = QApplication([])
 demo = Demo()
