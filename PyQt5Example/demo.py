@@ -22,6 +22,7 @@ class Demo(QMainWindow):
         self.testcase_names = []
         self.test_modules = []
         self.test_record = []
+        self.test_record_history = {}
         self.test_log = None
         self.initUI()
 
@@ -36,19 +37,25 @@ class Demo(QMainWindow):
         self.test_log.add_logging(log_msg)
 
     def test_begin(self, config_data):
+
+        test_time = QDateTime().currentDateTime().toString(Qt.ISODate)
+
         self.test_log = TestLog()
         self.test_log.test_name = self.windowTitle()  # 测试项目名称
         self.test_log.test_auth = config_data[0]  # 测试人员
         self.test_log.serial_num = config_data[1]  # 产品序列号
+        self.test_log.begin_time = test_time
         self.test_log.add_step("Begin")  # 设置日志位置
+
 
         self.add_log('开始测试！')
         self.test_record.clear()
         self.test_record.append(self.windowTitle())  # 项目名
         self.test_record.append(config_data[1])  # 产品序列号
         self.test_record.append(config_data[0])  # 操作人员
+        self.test_record.append(test_time)  # 测试时间
         self.test_record.append('测试通过')  # 测试结果
-        self.test_record.append(QTime().currentTime().toString(Qt.DefaultLocaleLongDate))  # 测试时间
+
 
         btn = self.findChild(QPushButton, 'begin_btn')
         btn.setDisabled(True)
@@ -69,7 +76,7 @@ class Demo(QMainWindow):
         status.setText('开始测试')
         check_btn.setDisabled(False)
         begin_time_item = testcase_table.model.item(data, 3)
-        begin_time_item.setText(QTime().currentTime().toString(Qt.DefaultLocaleLongDate))
+        begin_time_item.setText(QDateTime().currentDateTime().toString(Qt.ISODate))
 
     def testcase_end(self, data):
         print('第 %d 个测试用例结束' % data[0])
@@ -86,10 +93,10 @@ class Demo(QMainWindow):
             status.setText('测试失败')
             status.setBackground(QColor('Red'))
             self.test_record.append('测试失败')
-            if not self.test_record[3] == '测试失败':
-                self.test_record[3] = '测试失败'
+            if not self.test_record[4] == '测试失败':
+                self.test_record[4] = '测试失败'
         end_time_item = testcase_table.model.item(data[0], 4)
-        end_time_item.setText(QTime().currentTime().toString(Qt.DefaultLocaleLongDate))
+        end_time_item.setText(QDateTime().currentDateTime().toString(Qt.ISODate))
         self.add_log('用例测试完成！')
 
     def test_end(self):
@@ -100,6 +107,12 @@ class Demo(QMainWindow):
         self.tboard.tab2.add_record(self.test_record)
         self.test_log.add_step("End")  # 设置日志位置
         self.add_log('测试完成！')
+
+        # 将测试日志放入历史记录中
+        record_id = '%s_%s_%s_%s' % (self.test_log.test_name, self.test_log.test_auth,
+                                     self.test_log.serial_num, self.test_log.begin_time)
+        self.test_log.all()
+        self.test_record_history[record_id] = self.test_log
 
     def initUI(self):
         # 初始化状态条展示
@@ -205,6 +218,21 @@ class Demo(QMainWindow):
         log_window.log_edit.setText(log_text)
         log_window.exec_()
 
+    def check_history_log(self, record_id, test_case_name):
+
+        test_log = self.test_record_history[record_id]
+        if not test_case_name == 'all':
+            records = test_log.testcases_logs[test_case_name]
+            log_text = ''.join(records)
+        else:
+            log_text = test_log.all_log
+
+        log_window = LogWindow()
+        log_window.setWindowTitle('%s_%s' %(record_id, test_case_name))
+        log_window.log_edit.setText(log_text)
+        log_window.exec_()
+
+
 
 class CustomSingle(QObject):
     serial_config = pyqtSignal(tuple)
@@ -229,7 +257,6 @@ class LogWindow(QDialog):
         vbox.addWidget(self.log_edit)
 
         self.setLayout(vbox)
-
 
 
 class SerialConfigWindow(QDialog):
@@ -556,35 +583,39 @@ class TestRecordTable(QWidget):
         self.show_data()
 
     def init_data(self):
-        self.headers = ['项目名称', '产品序列号', '测试人员', '测试结果', '测试时间']
-        self.datas = [
-            ['项目一', '000001', '073130', '2019-01-01 14:00:00', 'PASS', 'PASS', "PASS", 'PASS', 'PASS'],
-            ['项目一', '000002', '073130', '2019-01-01 14:05:00', 'FAILED', 'PASS', "PASS", 'PASS', 'FAILED'],
-            ['项目一', '000003', '073130', '2019-01-01 14:10:00', 'FAILED', 'PASS', "PASS", 'FAILED', 'PASS']
-        ]
+        self.headers = ['项目名称', '产品序列号', '测试人员','测试时间', '测试结果' ]
 
     def show_data(self):
         self.model = QStandardItemModel()
         self.model.setHorizontalHeaderLabels(self.headers)
-        # for row in range(len(self.datas)):
-        #     data = self.datas[row]
-        #     for column in range(len(self.headers)):
-        #         item = QStandardItem(data[column])
-        #         if data[column] == 'PASS':
-        #             item.setForeground(QBrush(QColor(0, 255, 0)))
-        #         if data[column] == 'FAILED':
-        #             item.setForeground(QBrush(QColor(255, 0, 0)))
-        #         self.model.setItem(row, column, item)
         self.tableView = QTableView()
         self.tableView.setModel(self.model)
         self.tableView.horizontalHeader().setStretchLastSection(True)
         self.tableView.horizontalHeader().setSectionResizeMode(0)
         self.tableView.setEditTriggers(QTableView.NoEditTriggers)
-        self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tableView.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)
+
+        self.tableView.doubleClicked.connect(self.show_log)
+
         layout = QVBoxLayout()
         layout.addWidget(self.tableView)
         self.setLayout(layout)
+
+    def show_log(self, index):
+        row = index.row(),
+        row = row[0]
+        column = index.column()
+        name = self.model.item(row, 0).text()
+        serial_num = self.model.item(row, 1).text()
+        auth = self.model.item(row, 2).text()
+        test_time = self.model.item(row, 3).text()
+
+        record_id = '%s_%s_%s_%s' % (name, auth, serial_num, test_time)
+        test_case_name = self.model.horizontalHeaderItem(column).text()
+        if column < 5:
+            test_case_name = 'all'
+        self.parent().parent().parent().check_history_log(record_id, test_case_name)
 
     def init_header(self, headers):
         self.model.clear()
@@ -630,10 +661,13 @@ class TestLog(object):
         self.test_name = ''  # 测试项目名称
         self.test_auth = ''  # 测试人员
         self.serial_num = ''  # 产品序列号
+        self.begin_time = ''  # 测试开始时间
         self.testcases = []  # 测试用例名，用于排序
         self.testcases_logs = {}  # 测试用例执行中的日志
 
         self.current_logs = None  # 当前测试需要的日志
+
+        self.all_log = ''  # 最终汇总的日志
 
     def add_step(self, name):
         """
@@ -658,6 +692,12 @@ class TestLog(object):
         加载日志文件
         """
         return
+
+    def all(self):
+        """
+        汇总日志
+        """
+        self.all_log = '日志汇总待完成'
 
 
 app = QApplication([])
