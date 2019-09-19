@@ -19,8 +19,10 @@ class Demo(QMainWindow):
         # 开启状态条
         self.status_bar = self.statusBar()
         self.serial_conn = None
+        self.testcase_names = []
         self.test_modules = []
         self.test_record = []
+        self.test_log = None
         self.initUI()
 
     def init_events(self):
@@ -28,9 +30,19 @@ class Demo(QMainWindow):
         self.custom_single.testcase_begin[int].connect(self.testcase_begin)
         self.custom_single.testcase_end[tuple].connect(self.testcase_end)
         self.custom_single.test_end.connect(self.test_end)
+        self.custom_single.test_log[str].connect(self.add_log)
+
+    def add_log(self, log_msg):
+        self.test_log.add_logging(log_msg)
 
     def test_begin(self, config_data):
-        print('开始测试！')
+        self.test_log = TestLog()
+        self.test_log.test_name = self.windowTitle()  # 测试项目名称
+        self.test_log.test_auth = config_data[0]  # 测试人员
+        self.test_log.serial_num = config_data[1]  # 产品序列号
+        self.test_log.add_step("Begin")  # 设置日志位置
+
+        self.add_log('开始测试！')
         self.test_record.clear()
         self.test_record.append(self.windowTitle())  # 项目名
         self.test_record.append(config_data[1])  # 产品序列号
@@ -43,12 +55,14 @@ class Demo(QMainWindow):
         testcase_table = self.findChild(TestCaseTable, 'testcase_table')
         testcase_table.init_data()
 
-        print(config_data)
         workThread = WorkThread(self.custom_single, self.test_modules)
         workThread.start()
 
     def testcase_begin(self, data):
         print('第 %d 个测试用例开始' % data)
+        self.test_log.add_step(self.testcase_names[data])  # 设置日志位置
+        self.add_log('用例测试开始！')
+
         testcase_table = self.findChild(TestCaseTable, 'testcase_table')
         status = testcase_table.model.item(data, 1)
         check_btn = self.findChild(QPushButton, 'check_btn'+str(data))
@@ -59,13 +73,16 @@ class Demo(QMainWindow):
 
     def testcase_end(self, data):
         print('第 %d 个测试用例结束' % data[0])
+
         testcase_table = self.findChild(TestCaseTable, 'testcase_table')
         status = testcase_table.model.item(data[0], 1)
         if data[1]:
+            self.add_log('测试通过')
             status.setText('测试通过')
             status.setBackground(QColor('Green'))
             self.test_record.append('测试通过')
         else:
+            self.add_log('测试失败')
             status.setText('测试失败')
             status.setBackground(QColor('Red'))
             self.test_record.append('测试失败')
@@ -73,6 +90,7 @@ class Demo(QMainWindow):
                 self.test_record[3] = '测试失败'
         end_time_item = testcase_table.model.item(data[0], 4)
         end_time_item.setText(QTime().currentTime().toString(Qt.DefaultLocaleLongDate))
+        self.add_log('用例测试完成！')
 
     def test_end(self):
         print('测试完成！')
@@ -80,7 +98,8 @@ class Demo(QMainWindow):
         btn.setDisabled(False)
         # 增加数据到结果列表
         self.tboard.tab2.add_record(self.test_record)
-
+        self.test_log.add_step("End")  # 设置日志位置
+        self.add_log('测试完成！')
 
     def initUI(self):
         # 初始化状态条展示
@@ -153,6 +172,7 @@ class Demo(QMainWindow):
                 else:
                     print('load testcase error')
 
+            self.testcase_names = res['files']
             # 展示测试项
             self.tboard.tab1.table.testcases = res['files']
             self.tboard.tab1.table.load_data()
@@ -164,7 +184,6 @@ class Demo(QMainWindow):
         serial_config.exec_()
 
     def serial_conn(self, data):
-        print(data)
         self.serial_conn = ''
         self.disconn_act.setDisabled(False)
         self.conn_act.setDisabled(True)
@@ -174,12 +193,43 @@ class Demo(QMainWindow):
         self.disconn_act.setDisabled(True)
         self.conn_act.setDisabled(False)
 
+    def check_log(self, test_case_name):
+        """
+        展示对应测试用例的日志
+        """
+        records = self.test_log.testcases_logs[test_case_name]
+        log_text = ''.join(records)
+
+        log_window = LogWindow()
+        log_window.setWindowTitle(test_case_name)
+        log_window.log_edit.setText(log_text)
+        log_window.exec_()
+
 
 class CustomSingle(QObject):
     serial_config = pyqtSignal(tuple)
     testcase_begin = pyqtSignal(int)
     testcase_end = pyqtSignal(tuple)
     test_end = pyqtSignal()
+    test_log = pyqtSignal(str)
+
+
+class LogWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.init_ui()
+
+    def init_ui(self):
+        self.resize(400, 400)
+        self.setWindowTitle('日志展示')
+        self.setWindowModality(Qt.ApplicationModal)
+        self.log_edit = QTextEdit()
+        self.log_edit.setReadOnly(True)
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.log_edit)
+
+        self.setLayout(vbox)
+
 
 
 class SerialConfigWindow(QDialog):
@@ -399,12 +449,9 @@ class TestCaseTable(QWidget):
             end_time_item.setText('')
 
     def check_log(self):
-        """
-        TODO 弹出当前测试日志的窗口
-        """
         index = self.tableView.currentIndex()
-        test_case = self.model.item(index.row(), 0).text()
-        print(test_case)
+        test_case_name = self.model.item(index.row(), 0).text()
+        self.parent().parent().parent().parent().check_log(test_case_name)
 
 
 class CheckLogButton(QItemDelegate):
@@ -554,6 +601,7 @@ class TestRecordTable(QWidget):
                 item.setBackground(QColor('Green'))
             self.model.setItem(row, i, item)
 
+
 class WorkThread(QThread):
     def __init__(self, custom_single, modules):
         super(WorkThread, self).__init__()
@@ -565,9 +613,51 @@ class WorkThread(QThread):
         for i in range(len(modules)):
             self.custom_single.testcase_begin.emit(i)
             module = modules[i]
-            res = module.test()
+            test_case = module.TestCase(serial=None, logger=self.logger)
+            res = test_case.test()
             self.custom_single.testcase_end.emit((i, res))
         self.custom_single.test_end.emit()
+
+    def logger(self, msg):
+        self.custom_single.test_log.emit(msg)
+
+
+class TestLog(object):
+    """
+    每一次项目测试的日志
+    """
+    def __init__(self):
+        self.test_name = ''  # 测试项目名称
+        self.test_auth = ''  # 测试人员
+        self.serial_num = ''  # 产品序列号
+        self.testcases = []  # 测试用例名，用于排序
+        self.testcases_logs = {}  # 测试用例执行中的日志
+
+        self.current_logs = None  # 当前测试需要的日志
+
+    def add_step(self, name):
+        """
+        设置当前测试项
+        """
+        self.testcases.append(name)
+        self.testcases_logs[name] = []
+        self.current_logs = self.testcases_logs[name]
+
+    def add_logging(self, log):
+        current_time = QDateTime().currentDateTime().toString(Qt.ISODate)
+        self.current_logs.append('%s : %s \n' % (current_time, log))
+
+    def create_file(self, dir_path):
+        """
+        创建日志文件
+        """
+        return
+
+    def load_file(self, file_path):
+        """
+        加载日志文件
+        """
+        return
 
 
 app = QApplication([])
