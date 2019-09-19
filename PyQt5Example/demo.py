@@ -20,28 +20,67 @@ class Demo(QMainWindow):
         self.status_bar = self.statusBar()
         self.serial_conn = None
         self.test_modules = []
+        self.test_record = []
         self.initUI()
 
     def init_events(self):
         self.custom_single.serial_config[tuple].connect(self.serial_conn)
         self.custom_single.testcase_begin[int].connect(self.testcase_begin)
-        self.custom_single.testcase_end[int].connect(self.testcase_end)
+        self.custom_single.testcase_end[tuple].connect(self.testcase_end)
         self.custom_single.test_end.connect(self.test_end)
 
-    def test_begin(self,config_data):
+    def test_begin(self, config_data):
         print('开始测试！')
+        self.test_record.clear()
+        self.test_record.append(self.windowTitle())  # 项目名
+        self.test_record.append(config_data[1])  # 产品序列号
+        self.test_record.append(config_data[0])  # 操作人员
+        self.test_record.append('测试通过')  # 测试结果
+        self.test_record.append(QTime().currentTime().toString(Qt.DefaultLocaleLongDate))  # 测试时间
+
+        btn = self.findChild(QPushButton, 'begin_btn')
+        btn.setDisabled(True)
+        testcase_table = self.findChild(TestCaseTable, 'testcase_table')
+        testcase_table.init_data()
+
         print(config_data)
         workThread = WorkThread(self.custom_single, self.test_modules)
         workThread.start()
 
     def testcase_begin(self, data):
         print('第 %d 个测试用例开始' % data)
+        testcase_table = self.findChild(TestCaseTable, 'testcase_table')
+        status = testcase_table.model.item(data, 1)
+        check_btn = self.findChild(QPushButton, 'check_btn'+str(data))
+        status.setText('开始测试')
+        check_btn.setDisabled(False)
+        begin_time_item = testcase_table.model.item(data, 3)
+        begin_time_item.setText(QTime().currentTime().toString(Qt.DefaultLocaleLongDate))
 
     def testcase_end(self, data):
-        print('第 %d 个测试用例结束' % data)
+        print('第 %d 个测试用例结束' % data[0])
+        testcase_table = self.findChild(TestCaseTable, 'testcase_table')
+        status = testcase_table.model.item(data[0], 1)
+        if data[1]:
+            status.setText('测试通过')
+            status.setBackground(QColor('Green'))
+            self.test_record.append('测试通过')
+        else:
+            status.setText('测试失败')
+            status.setBackground(QColor('Red'))
+            self.test_record.append('测试失败')
+            if not self.test_record[3] == '测试失败':
+                self.test_record[3] = '测试失败'
+        end_time_item = testcase_table.model.item(data[0], 4)
+        end_time_item.setText(QTime().currentTime().toString(Qt.DefaultLocaleLongDate))
 
     def test_end(self):
         print('测试完成！')
+        btn = self.findChild(QPushButton, 'begin_btn')
+        btn.setDisabled(False)
+        # 增加数据到结果列表
+        self.tboard.tab2.add_record(self.test_record)
+
 
     def initUI(self):
         # 初始化状态条展示
@@ -113,9 +152,12 @@ class Demo(QMainWindow):
                     self.test_modules.append(mod)
                 else:
                     print('load testcase error')
+
             # 展示测试项
             self.tboard.tab1.table.testcases = res['files']
             self.tboard.tab1.table.load_data()
+            # 加载测试结果表头
+            self.tboard.tab2.init_header(res['files'])
 
     def serial_conn_window(self):
         serial_config = SerialConfigWindow(self.custom_single)
@@ -136,7 +178,7 @@ class Demo(QMainWindow):
 class CustomSingle(QObject):
     serial_config = pyqtSignal(tuple)
     testcase_begin = pyqtSignal(int)
-    testcase_end = pyqtSignal(int)
+    testcase_end = pyqtSignal(tuple)
     test_end = pyqtSignal()
 
 
@@ -292,6 +334,7 @@ class TestCase(QWidget):
         layout = QVBoxLayout()
 
         self.table = TestCaseTable()
+        self.table.setObjectName('testcase_table')
         self.config = TestCaseConfig()
         layout.addWidget(self.table)
         layout.addWidget(self.config)
@@ -321,7 +364,7 @@ class TestCaseTable(QWidget):
         # 设置不可编辑
         self.tableView.setEditTriggers(QTableView.NoEditTriggers)
         # 设置行选中
-        self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tableView.setSelectionBehavior(QAbstractItemView.SelectItems)
         # 设置只能选中一行
         self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tableView.setColumnWidth(0, 300)
@@ -339,6 +382,21 @@ class TestCaseTable(QWidget):
             self.model.setItem(i, 0, item_name)
             item_status = QStandardItem('等待测试')
             self.model.setItem(i, 1, item_status)
+            self.model.setItem(i, 3, QStandardItem(''))
+            self.model.setItem(i, 4, QStandardItem(''))
+
+    def init_data(self):
+        row_count = self.model.rowCount()
+        for i in range(row_count):
+            status = self.model.item(i, 1)
+            check_btn = self.findChild(QPushButton, 'check_btn' + str(i))
+            status.setText('等待测试')
+            status.setBackground(QColor('White'))
+            check_btn.setDisabled(True)
+            begin_time_item = self.model.item(i, 3)
+            end_time_item = self.model.item(i, 4)
+            begin_time_item.setText('')
+            end_time_item.setText('')
 
     def check_log(self):
         """
@@ -360,6 +418,8 @@ class CheckLogButton(QItemDelegate):
                 self.parent(),
                 clicked = self.parent().check_log
             )
+            button.setObjectName('check_btn'+str(index.row()))
+            button.setDisabled(True)
             self.parent().tableView.setIndexWidget(
                 index,
                 button
@@ -407,8 +467,8 @@ class TestCaseConfig(QWidget):
         self.edit5.setDisabled(True)
         self.edit6.setDisabled(True)
 
-
         self.begin_btn = QPushButton('开始')
+        self.begin_btn.setObjectName('begin_btn')
         self.begin_btn.setMinimumSize(80, 60)
         self.begin_btn.setMaximumSize(80, 60)
         self.begin_btn.clicked.connect(self.begin_test)
@@ -429,6 +489,9 @@ class TestCaseConfig(QWidget):
         data1 = self.edit1.text()
         data2 = self.edit2.text()
         data3 = self.edit3.text()
+        if data1 == '' or data2 == '' or data3 == '':
+            QMessageBox.warning(self, '错误', '消息输入不完成！', QMessageBox.Close, QMessageBox.Close)
+            return
         data4 = self.edit4.text()
         data5 = self.edit5.text()
         data6 = self.edit6.text()
@@ -446,7 +509,7 @@ class TestRecordTable(QWidget):
         self.show_data()
 
     def init_data(self):
-        self.headers = ['项目名称', '产品序列号', '测试人员', '测试时间', '测试结果', '测试用例1', '测试用例2', '测试用例3', '测试用例4']
+        self.headers = ['项目名称', '产品序列号', '测试人员', '测试结果', '测试时间']
         self.datas = [
             ['项目一', '000001', '073130', '2019-01-01 14:00:00', 'PASS', 'PASS', "PASS", 'PASS', 'PASS'],
             ['项目一', '000002', '073130', '2019-01-01 14:05:00', 'FAILED', 'PASS', "PASS", 'PASS', 'FAILED'],
@@ -456,17 +519,15 @@ class TestRecordTable(QWidget):
     def show_data(self):
         self.model = QStandardItemModel()
         self.model.setHorizontalHeaderLabels(self.headers)
-
-        for row in range(len(self.datas)):
-            data = self.datas[row]
-            for column in range(len(self.headers)):
-                item = QStandardItem(data[column])
-                if data[column] == 'PASS':
-                    item.setForeground(QBrush(QColor(0, 255, 0)))
-                if data[column] == 'FAILED':
-                    item.setForeground(QBrush(QColor(255, 0, 0)))
-                self.model.setItem(row, column, item)
-
+        # for row in range(len(self.datas)):
+        #     data = self.datas[row]
+        #     for column in range(len(self.headers)):
+        #         item = QStandardItem(data[column])
+        #         if data[column] == 'PASS':
+        #             item.setForeground(QBrush(QColor(0, 255, 0)))
+        #         if data[column] == 'FAILED':
+        #             item.setForeground(QBrush(QColor(255, 0, 0)))
+        #         self.model.setItem(row, column, item)
         self.tableView = QTableView()
         self.tableView.setModel(self.model)
         self.tableView.horizontalHeader().setStretchLastSection(True)
@@ -478,6 +539,20 @@ class TestRecordTable(QWidget):
         layout.addWidget(self.tableView)
         self.setLayout(layout)
 
+    def init_header(self, headers):
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(self.headers+headers+[''])
+
+    def add_record(self, datas):
+        row = self.model.rowCount()
+        for i in range(len(datas)):
+            data = datas[i]
+            item = QStandardItem(data)
+            if data == '测试失败':
+                item.setBackground(QColor('Red'))
+            if data == '测试通过':
+                item.setBackground(QColor('Green'))
+            self.model.setItem(row, i, item)
 
 class WorkThread(QThread):
     def __init__(self, custom_single, modules):
@@ -490,10 +565,10 @@ class WorkThread(QThread):
         for i in range(len(modules)):
             self.custom_single.testcase_begin.emit(i)
             module = modules[i]
-            print(module)
-            print(module.test())
-            self.custom_single.testcase_end.emit(i)
+            res = module.test()
+            self.custom_single.testcase_end.emit((i, res))
         self.custom_single.test_end.emit()
+
 
 app = QApplication([])
 demo = Demo()
