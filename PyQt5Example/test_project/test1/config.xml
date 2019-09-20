@@ -1,0 +1,8 @@
+<project name="test1">
+    <testcases>
+        <testcase file = 'testcase1'>Enable</testcase>
+        <testcase file = 'testcase2'>Enable</testcase>
+        <testcase file = 'testcase3'>Enable</testcase>
+        <testcase file = 'testcase4'>Enable</testcase>
+    </testcases>
+</project>

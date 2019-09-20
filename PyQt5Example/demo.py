@@ -5,6 +5,7 @@ import os
 import json
 import time
 import logging
+import fix_qt_import_error  # 解决pyqt5 打包之后的问题
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -115,11 +116,12 @@ class Demo(QMainWindow):
 
         # 需要的参数
         need_data = [self.serial_conn]
-        workThread = WorkThread(self.custom_single, self.test_modules, need_data)
-        workThread.start()
+        # self.workThread  解决 QThread: Destroyed while thread is still running
+        self.workThread = WorkThread(self.custom_single, self.test_modules, need_data)
+        self.workThread.start()
 
     def testcase_begin(self, data):
-        print('第 %d 个测试用例开始' % data)
+        logging.info('第 %d 个测试用例开始' % data)
         self.test_log.add_step(self.testcase_names[data])  # 设置日志位置
         self.add_log('用例测试开始！')
 
@@ -132,7 +134,7 @@ class Demo(QMainWindow):
         begin_time_item.setText(QDateTime().currentDateTime().toString(Qt.ISODate))
 
     def testcase_end(self, data):
-        print('第 %d 个测试用例结束' % data[0])
+        logging.info('第 %d 个测试用例结束' % data[0])
 
         testcase_table = self.findChild(TestCaseTable, 'testcase_table')
         status = testcase_table.model.item(data[0], 1)
@@ -153,7 +155,7 @@ class Demo(QMainWindow):
         self.add_log('用例测试完成！')
 
     def test_end(self):
-        print('测试完成！')
+        logging.info('测试完成！')
         btn = self.findChild(QPushButton, 'begin_btn')
         btn.setDisabled(False)
         # 增加数据到结果列表
@@ -243,7 +245,7 @@ class Demo(QMainWindow):
                     mod = imp.load_module(testcase, fn_, path, desc)
                     self.test_modules.append(mod)
                 else:
-                    print('load testcase error')
+                    logging.info('load testcase error')
 
             self.testcase_names = res['files']
             # 展示测试项
