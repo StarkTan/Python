@@ -697,7 +697,28 @@ class TestLog(object):
         """
         汇总日志
         """
-        self.all_log = '日志汇总待完成'
+        sign = '*'*6
+        head = '测试开始'
+        tail = '测试结束'
+
+        lines = []
+
+        for step in self.testcases:
+            if step == 'Begin':
+                lines.append(sign+head+sign+'\n')
+                lines.append('项目名称：%s\n' % self.test_name)
+                lines.append('产品序列号：%s\n' % self.serial_num)
+                lines.append('测试人员：%s\n' % self.test_auth)
+                lines.append('测试时间：%s\n' % self.begin_time)
+                lines.extend(self.testcases_logs[step])
+            elif step == 'End':
+                lines.append(sign + tail + sign + '\n')
+                lines.extend(self.testcases_logs[step])
+            else:
+                lines.append(sign + step + sign + '\n')
+                lines.extend(self.testcases_logs[step])
+
+        self.all_log = ''.join(lines)
 
 
 app = QApplication([])
