@@ -2,9 +2,45 @@ import sys
 import imp
 import utils
 import os
+import json
+import time
+import logging
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+
+"""
+    初始化程序运行环境
+        检查创建运行文件夹
+        检查创建配置文件
+        配置日志路径
+"""
+folder_path = r'./private_file'
+if not os.path.exists(folder_path):
+    os.mkdir(folder_path)
+config_file = 'config.json'
+config_file_path = os.path.join(folder_path, config_file)
+
+if not os.path.exists(config_file_path):
+    config = {}
+    with open(config_file_path, "w") as f:
+        json.dump(config, f)
+
+logging_folder_path = os.path.join(folder_path, 'log')
+if not os.path.exists(logging_folder_path):
+    os.mkdir(logging_folder_path)
+
+logging_file = 'demo_%s.log' % QDateTime().currentDateTime().toString(Qt.ISODate).replace('-','').replace(':','')
+
+logging_file_path = os.path.join(logging_folder_path, logging_file)
+format = '%(asctime)s : %(message)s'
+logging.basicConfig(filename=logging_file_path, filemode='w',
+                    format=format, level=logging.INFO)
+logging.info("环境加载完成")
+
+test_log_folder = './cache'
+if not os.path.exists(test_log_folder):
+    os.mkdir(test_log_folder)
 
 
 class Demo(QMainWindow):
@@ -25,6 +61,19 @@ class Demo(QMainWindow):
         self.test_record_history = {}
         self.test_log = None
         self.initUI()
+        self.init_config()
+
+    def init_config(self):
+        try:
+            with open(config_file_path, 'r') as load_f:
+                self.config = json.load(load_f)
+        except Exception as e:
+            logging.warning('加载配置文件失败'+str(e))
+            self.config = {}
+            with open(config_file_path, "w") as f:
+                json.dump(self.config, f)
+        if 'project_path' in self.config.keys():
+            self.load_project(self.config['project_path'])
 
     def init_events(self):
         self.custom_single.serial_config[tuple].connect(self.serial_conn)
@@ -32,6 +81,8 @@ class Demo(QMainWindow):
         self.custom_single.testcase_end[tuple].connect(self.testcase_end)
         self.custom_single.test_end.connect(self.test_end)
         self.custom_single.test_log[str].connect(self.add_log)
+        self.custom_single.input_window[str].connect(self.input_window)
+        self.custom_single.button_window[tuple].connect(self.button_window)
 
     def add_log(self, log_msg):
         self.test_log.add_logging(log_msg)
@@ -62,7 +113,9 @@ class Demo(QMainWindow):
         testcase_table = self.findChild(TestCaseTable, 'testcase_table')
         testcase_table.init_data()
 
-        workThread = WorkThread(self.custom_single, self.test_modules)
+        # 需要的参数
+        need_data = [self.serial_conn]
+        workThread = WorkThread(self.custom_single, self.test_modules, need_data)
         workThread.start()
 
     def testcase_begin(self, data):
@@ -145,7 +198,7 @@ class Demo(QMainWindow):
         choice_project = QAction(QIcon(''), '&配置项目', self)
         choice_project.setShortcut('Ctrl+O')
         choice_project.setStatusTip('选择测试项目')
-        choice_project.triggered.connect(self.load_project)
+        choice_project.triggered.connect(self.load_project_file)
 
         conn_act = QAction(QIcon(''), '&连接串口', self)
         conn_act.setShortcut('Ctrl+N')
@@ -167,15 +220,22 @@ class Demo(QMainWindow):
         config_menu.addAction(conn_act)
         config_menu.addAction(disconn_act)
 
-    def load_project(self):
+    def load_project_file(self):
         # 打开文件选择框
         fname = QFileDialog.getOpenFileName(self, 'Open file', './', 'Binary File(*.xml)')
         if len(fname[0]) > 0:
+            self.load_project(fname[0])
+            self.config['project_path'] = fname[0]
+            with open(config_file_path, "w") as f:
+                json.dump(self.config, f)
+
+    def load_project(self, path):
+        if len(path) > 0:
             self.test_modules.clear()
-            res = utils.config_parse(fname[0])
+            res = utils.config_parse(path)
             self.setWindowTitle(res['project'])
             # 加载测试的文件
-            folder = os.path.split(fname[0])[0]
+            folder = os.path.split(path)[0]
             for testcase in res['files']:
                 file_path = os.path.join(folder, testcase+'.py')
                 if os.path.exists(file_path):
@@ -232,6 +292,32 @@ class Demo(QMainWindow):
         log_window.log_edit.setText(log_text)
         log_window.exec_()
 
+    def input_window(self, input_name):
+        """
+        弹出输入框
+        """
+        text, ok = QInputDialog.getText(self,'输入数据',
+                                        input_name)
+
+        self.custom_single.main_thread_response.emit(('input_window', (text, ok)))
+
+    def button_window(self, data):
+        msg = data[0]
+        btn_names =data[1]
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('按钮框')
+        msgBox.setText(msg)
+
+        for btn_name in btn_names:
+            msgBox.addButton(str(btn_name), QMessageBox.ActionRole)
+        msgBox.addButton('取消', QMessageBox.RejectRole)
+
+        reply = msgBox.exec()
+        if not reply < len(btn_names):
+            res = ''
+        else:
+            res = btn_names[reply]
+        self.custom_single.main_thread_response.emit(('button_window', res))
 
 
 class CustomSingle(QObject):
@@ -240,6 +326,9 @@ class CustomSingle(QObject):
     testcase_end = pyqtSignal(tuple)
     test_end = pyqtSignal()
     test_log = pyqtSignal(str)
+    input_window = pyqtSignal(str)
+    button_window = pyqtSignal(tuple)
+    main_thread_response = pyqtSignal(tuple)
 
 
 class LogWindow(QDialog):
@@ -634,23 +723,50 @@ class TestRecordTable(QWidget):
 
 
 class WorkThread(QThread):
-    def __init__(self, custom_single, modules):
+    def __init__(self, custom_single, modules, need_data):
         super(WorkThread, self).__init__()
         self.custom_single = custom_single
+        self.custom_single.main_thread_response[tuple].connect(self.response)
         self.modules = modules
+        self.need_data = need_data
+        self.data = {'input_window': None,
+                     'button_window': None}
 
     def run(self):
         modules = self.modules
         for i in range(len(modules)):
             self.custom_single.testcase_begin.emit(i)
             module = modules[i]
-            test_case = module.TestCase(serial=None, logger=self.logger)
+            test_case = module.TestCase(serial=None, logger=self.logger,
+                                        input_window=self.input_window,
+                                        button_window=self.button_window)
             res = test_case.test()
             self.custom_single.testcase_end.emit((i, res))
         self.custom_single.test_end.emit()
 
     def logger(self, msg):
         self.custom_single.test_log.emit(msg)
+
+    def input_window(self, msg):
+        self.custom_single.input_window.emit(msg)
+        while self.data['input_window'] is None:
+            time.sleep(0.1)
+        res = self.data['input_window']
+        self.data['input_window'] = None
+        return res
+
+
+    def button_window(self,msg, btn_names):
+        self.custom_single.button_window.emit((msg, btn_names))
+        while self.data['button_window'] is None:
+            time.sleep(0.1)
+        res = self.data['button_window']
+        self.data['button_window'] = None
+        return res
+
+    def response(self, data):
+        if data[0] in self.data:
+            self.data[data[0]] = data[1]
 
 
 class TestLog(object):
