@@ -30,7 +30,7 @@ logging_folder_path = os.path.join(folder_path, 'log')
 if not os.path.exists(logging_folder_path):
     os.mkdir(logging_folder_path)
 
-logging_file = 'demo_%s.log' % QDateTime().currentDateTime().toString(Qt.ISODate).replace('-','').replace(':','')
+logging_file = 'demo_%s.log' % QDateTime().currentDateTime().toString(Qt.ISODate).replace(':','')
 
 logging_file_path = os.path.join(logging_folder_path, logging_file)
 format = '%(asctime)s : %(message)s'
@@ -835,6 +835,14 @@ class TestLog(object):
                 lines.extend(self.testcases_logs[step])
 
         self.all_log = ''.join(lines)
+
+        log_file = '%s_%s_%s_%s.log' % (self.test_name, self.test_auth,
+                                     self.serial_num, self.begin_time)
+        log_file = log_file.replace(':', '')
+
+        log_path = os.path.join(test_log_folder,log_file)
+        with open(log_path, "w") as f:
+            f.write(self.all_log)
 
 
 app = QApplication([])
