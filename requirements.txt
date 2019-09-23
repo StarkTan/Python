@@ -19,3 +19,8 @@ opencv-python==4.1.0.25
 sphinx
 pyqt5
 pyinstaller
+
+---网络扫描
+nmap
+python-nmap
+netifaces
