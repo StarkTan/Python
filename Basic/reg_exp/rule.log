@@ -34,8 +34,8 @@ $            匹配结束位置，多行模式下匹配每一行结束
 \S           匹配非空白字符，相当于 [^ \t\n\r\f\v]
 \w           匹配数字、字母、下划线中任意一个字符， 相当于 [a-zA-Z0-9_]
 \W           匹配非数字、字母、下划线中的任意字符，相当于 [^a-zA-Z0-9_]
-TODO  example
-二：模式
+
+二：模式  re_flag_example.py
 I            IGNORECASE， 忽略大小写的匹配模式
 L            LOCALE， 字符集本地化。比如法语环境可以匹配"é"，中文环境没有用
 M            MULTILINE，多行模式, 改变 ^ 和 $ 的行为
@@ -45,7 +45,7 @@ U            UNICODE，使用 \w, \W, \b, \B 这些元字符时将按照 UNICODE
 
 正则表达式的模式是可以同时使用多个的，在 python 里面使用按位或运算符 | 同时添加多个模式
 如 re.compile('', re.I|re.M|re.S)
-TODO  example
+
 
 三：函数
 compile(pattern, flags=0)
