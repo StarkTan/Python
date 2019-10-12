@@ -47,7 +47,7 @@ U            UNICODE，使用 \w, \W, \b, \B 这些元字符时将按照 UNICODE
 如 re.compile('', re.I|re.M|re.S)
 
 
-三：函数
+三：函数 re_method_example.py
 compile(pattern, flags=0)
     给定一个正则表达式 pattern，指定使用的模式 flags 默认为0 即不使用任何模式,然后会返回一个 SRE_Pattern
 escape(pattern)
@@ -76,7 +76,7 @@ subn(pattern, repl, string, count=0, flags=0)
     作用与函数 sub 一样， 唯一不同之处在于返回值为一个元组，第一个值为替换后的字符串，第二个值为发生替换的次数
 template(pattern, flags=0)
     和 compile 差不多，不过不支持 +、？、*、｛｝ 作用不明
-TODO  example
+
 四：re 内置对象
 SRE_Pattern     这个对象是一个编译后的正则表达式，编译后不仅能够复用和提升效率，
                 同时也能够获得一些其他的关于正则表达式的信息
