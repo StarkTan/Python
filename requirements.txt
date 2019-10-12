@@ -20,7 +20,4 @@ sphinx
 pyqt5
 pyinstaller
 
----网络扫描
-nmap
-python-nmap
-netifaces
+paramiko==2.6.0
