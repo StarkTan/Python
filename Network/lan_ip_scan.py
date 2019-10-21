@@ -108,5 +108,5 @@ def arp_a_linux(gateway=None):
             res.append((ip, mac))
     return res
 
-print(arp_a_win())
+# print(arp_a_win())
 # find_all_valid_ip_mac()
