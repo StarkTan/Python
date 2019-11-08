@@ -1,0 +1,17 @@
+http请求头（80默认不带端口号）http://starktan.org.cn:8080/
+b'GET http://starktan.org.cn/ HTTP/1.1\r\n
+Host: starktan.org.cn\r\n
+Proxy-Connection: keep-alive\r\n
+Upgrade-Insecure-Requests: 1\r\nUser-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36\r\n
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3\r\n
+Accept-Encoding: gzip, deflate\r\n
+Accept-Language: zh-CN,zh;q=0.9\r\n
+\r\n'
+
+https 请求头
+b'CONNECT starktan.org.cn:443 HTTP/1.1\r\n
+Host: starktan.org.cn:443\r\n
+Proxy-Connection: keep-alive\r\n
+User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36\r\n
+\r\n'
+
