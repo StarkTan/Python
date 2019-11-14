@@ -22,3 +22,6 @@ pyqt5
 pyinstaller
 
 paramiko==2.6.0
+
+pywifi==1.1.12
+comtypes
