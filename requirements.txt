@@ -25,3 +25,5 @@ paramiko==2.6.0
 
 pywifi==1.1.12
 comtypes
+
+python-socketio==3.0.0
