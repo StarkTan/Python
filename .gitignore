@@ -6,3 +6,5 @@ venv
 */private_file
 */compile
 private
+PyTorch/quick_start/data
+PyTorch/quick_start_2/data
