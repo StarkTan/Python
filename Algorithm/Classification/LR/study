@@ -1,0 +1,6 @@
+逻辑回归分类算法（Logistic Regression Classifier）
+  学习网站：https://www.cnblogs.com/luozeng/p/8605140.html
+  主要思想：用最大似然概率方法构建出方程，为最大化方程，利用牛顿梯度上升求解方程参数
+  作用：主要解决二分类问题
+  例如:训练集[{x1,y1},{x2,y2}.....{xi,yi}] x是n维向量，y=0或者1，判断xi+1时y的取值
+  TODO 推导公式40% 似然函数50%
