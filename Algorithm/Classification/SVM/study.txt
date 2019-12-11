@@ -1,0 +1,7 @@
+SVM算法学习
+  1.算法理解 60%
+    参考网站：
+      https://blog.csdn.net/d__760/article/details/80387432
+      https://blog.csdn.net/hx14301009/article/details/79762666
+      https://blog.csdn.net/zm1_1zm/article/details/59478776
+  2.简单实用
