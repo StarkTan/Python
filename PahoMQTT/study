@@ -2,5 +2,6 @@
 参考网址
     paho-mqtt简单使用：https://www.jianshu.com/p/0ed4e59b1e8f
     mqtt服务器搭建：https://www.jianshu.com/p/e5cf0c1fd55c
+    paho-mqtt awsiot使用: https://github.com/mariocannistra/python-paho-mqtt-for-aws-iot
 
 
