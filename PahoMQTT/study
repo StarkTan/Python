@@ -1,6 +1,7 @@
 整理 Python MQTT 数据
 参考网址
     paho-mqtt简单使用：https://www.jianshu.com/p/0ed4e59b1e8f
+    pahho-mqtt 详细解析：https://www.cnblogs.com/lnn123/p/10837754.html
     mqtt服务器搭建：https://www.jianshu.com/p/e5cf0c1fd55c
     paho-mqtt awsiot使用: https://github.com/mariocannistra/python-paho-mqtt-for-aws-iot
 
