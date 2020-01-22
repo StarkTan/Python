@@ -1,0 +1,2 @@
+mongodb安装：https://www.runoob.com/mongodb/mongodb-window-install.html
+python 直接操作mongodb：https://www.runoob.com/python3/python-mongodb.html
