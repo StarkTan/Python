@@ -4,5 +4,9 @@
     pahho-mqtt 详细解析：https://www.cnblogs.com/lnn123/p/10837754.html
     mqtt服务器搭建：https://www.jianshu.com/p/e5cf0c1fd55c
     paho-mqtt awsiot使用: https://github.com/mariocannistra/python-paho-mqtt-for-aws-iot
-
-
+    mqtt 可靠性优化 ：
+        https://stackoverflow.com/questions/35580906/paho-mqtt-client-connection-reliability-reconnect-on-disconnection
+    mqtt Django 集成可能出现问题：
+        https://stackoverflow.com/questions/48294599/django-stops-recieving-sending-mqtt-messages-after-raising-any-exception?noredirect=1
+    mqtt 消息可靠性：
+        https://stackoverflow.com/questions/28125959/paho-mqtt-client-behaviour-when-broker-times-out-client-disconnects
