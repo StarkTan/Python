@@ -1,7 +1,7 @@
 整理 Python MQTT 数据
 参考网址
     paho-mqtt简单使用：https://www.jianshu.com/p/0ed4e59b1e8f
-    pahho-mqtt 详细解析：https://www.cnblogs.com/lnn123/p/10837754.html
+    paho-mqtt 详细解析：https://www.cnblogs.com/lnn123/p/10837754.html
     mqtt服务器搭建：https://www.jianshu.com/p/e5cf0c1fd55c
     paho-mqtt awsiot使用: https://github.com/mariocannistra/python-paho-mqtt-for-aws-iot
     mqtt 可靠性优化 ：
@@ -10,3 +10,23 @@
         https://stackoverflow.com/questions/48294599/django-stops-recieving-sending-mqtt-messages-after-raising-any-exception?noredirect=1
     mqtt 消息可靠性：
         https://stackoverflow.com/questions/28125959/paho-mqtt-client-behaviour-when-broker-times-out-client-disconnects
+    mqtt 协议文档：  https://docs.emqx.io/broker/v3/cn/protocol.html
+    mqtt 消息协议解析：http://www.blogjava.net/yongboy/archive/2014/02/07/409587.html
+
+###############学习终结################
+1.基于主题的路由
+    '+': 表示通配一个层级，例如a/+，匹配a/x, a/y
+    '#': 表示通配多个层级，例如a/#，匹配a/x, a/b/c/d
+2.协议消耗资源少，有效负载最多256M
+3.消息质量 (Quality of Service)
+    QoS0:最多一次传递
+    QoS1:至少一次传递
+    QoS3:保证一次传递
+    消息传递在客户端和服务端进行
+    客户端向服务端推送的消息，消息质量由Publish指定
+    服务端向向客户端推送订阅的消息，消息质量由Publish和Subscribe质量共同决定，取最低
+4.MQTT会话
+    客户端在创建连接时可以指定 Clean Session，
+    0表示创建一个持久会话(断线时保存离线消息，直到超时注销)
+    1表示创建一个临时会话
+
