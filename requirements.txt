@@ -38,3 +38,5 @@ scipy
 paho-mqtt
 PyJWT
 pymongo
+
+openpyxl
